@@ -1,0 +1,59 @@
+.h1, h1 {
+    font-size: 26px;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+label {
+    display: inline-block;
+    max-width: 100%;
+    margin-bottom: 5px;
+    font-weight: 700;
+    font-size: 11px;
+}
+
+input[type="radio"] {
+    margin-top: 1px;
+}
+
+.item {
+    font-size: 11px;
+}
+
+.box-header .box-title {
+    font-size: 12px;
+    FONT-WEIGHT: 700;
+}
+
+.selectize-input.items.full.has-options.has-items {
+    min-height: 22px;
+    height: 24px;
+    padding: 1px 12px;
+}
+
+.content-wrapper{
+      margin-left: 200px;
+}
+
+
+.main-sidebar {
+    width: 200px;
+}
+
+.main-header .navbar {
+margin-left: 200px;
+  
+}
+
+.main-header .logo {
+  width: 200px;
+}
+
+.form-control {
+font-size: 12px;
+}
+
+
+.dataTables_wrapper {
+    font-size: 11px;
+}

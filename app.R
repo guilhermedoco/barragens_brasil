@@ -66,7 +66,6 @@ final$VolumeAtual <- as.numeric(gsub(",", ".", gsub(".","",gsub(" ", "", final$`
 # Ajustando a variável Altura Atual
 final$AlturaAtual <- as.numeric(gsub(",", ".", gsub(".","",gsub(" ", "", final$`ALTURA ATUAL (m)`, fixed = TRUE),fixed = TRUE), fixed = TRUE))
 
-
 # Design ######################################################################
 
 brbg <- hsv(0.5, .35, seq(.25, .95, length.out = 12))
@@ -85,26 +84,17 @@ logo_blue <- shinyDashboardLogoDIY(
 header <- dashboardHeader(title = logo_blue)
 
 sidebar <- dashboardSidebar(
-  # sidebarUserPanel("LOGADO",
-  #                  subtitle = a(href = "https://www.grupoabg.com.br/shiny/ipp_sindicom/", icon("circle", class = "text-success"), "Logout"),
-  #                  # Image file should be in www/ subdir
-  #                  image = "https://scontent.fplu3-1.fna.fbcdn.net/v/t1.0-1/c0.1.200.200a/p200x200/556325_370425363046864_1647666579_n.png?_nc_cat=101&_nc_ht=scontent.fplu3-1.fna&oh=407b166f07b413f7d5669492b9301ba7&oe=5CC1C664"
-  # ),
-  # #sidebarSearchForm(label = "O que procura?", "searchText", "searchButton"),
-  # 
+
   sidebarMenu(
     id = "tabs",
-    menuItem("Exploratória", tabName = "exploratoria", icon = icon("file")),
-    menuItem("Faturamento 2018", tabName = "GestãoaVista1", icon = icon("file")),
-    menuItem("Faturamento", tabName = "GestãoaVista", icon = icon("file")),
-    menuItem("Leads", tabName = "Leads", icon = icon("file")),
-    menuItem("Propostas", tabName = "Propostas", icon = icon("file")),
-    menuItem("Funcionários", tabName = "Funcionarios", icon = icon("file")),
-    menuItem("Remuneração Variável", tabName = "RV", icon = icon("file")),
-    menuItem("Financeiro", tabName = "Financeiro", icon = icon("file"))
-    # ,
-    # br(),br(),br(),br(),br(),br(),br(),br(),br(),
-    # actionButton("Logout", "Log out", icon = icon("arrow-circle-left"))
+    menuItem("Apresentação", tabName = "capa", icon = icon("file")),
+    menuItem("Dados Completos", tabName = "dados", icon = icon("file")),
+    menuItem("Mapa das Barragens", tabName = "exploratoria", icon = icon("file")),
+    br(),br(),br(),br(),br(), br(),br(),br(),br(),br(),br(),br(),br(),br(),br(),
+    br(),br(),br(),br(),br(),br(),br(),br(),
+    h6("Desenvolvido por",align="center"),h6("ABG Consultoria Estatística",align="center"),
+    h6("contato@abgconsultoria.com.br",align="center"),
+    h6("Tel: (31) 2516-0068",align="center")
   ),
   tags$footer(label = "Desenvolvido por", src = "https://www.abgconsultoria.com.br/assets/images/logo-footer1.png", 
               style = "text-align:center; align: center; padding: 0px; margin-bottom: 0px;")
@@ -116,6 +106,18 @@ body <- dashboardBody(
   # shinyDashboardThemes(theme = "blue_gradient"),
   theme_blue_gradient,
   tabItems(
+    tabItem(
+      tabName = "capa",
+      h1("APRESENTAÇÃO DO PROJETO", align = "center"),
+      h4("Após pouco mais de três anos, na tarde do dia 25 de janeiro de 2019 recebemos mais uma notícia de um rompimento de barragem de contenção de minério. Decidimos então verificar quais dados se tem disponíveis para conhecer sobre a distribuição das barragens de mineradoras no pais e entender o tamanho do problema que temos sobre este tema."),
+      h4("As visualizações a seguir se referem a base de dados de classificação das barragens de mineração - database 01/2019, que consta na Cadastro Nacional de Barragens de Mineração no site da Agência Nacional de Mineração."),
+      img(src="FotoCapa.jpg",class="img-responsive")
+    ),
+      tabItem(
+        tabName = "dados",
+        h1("TABELA COMPLETA", align = "center"),
+        DT::dataTableOutput("TabelaCompleta")
+        ),
     tabItem(
       tabName = "exploratoria",
       h1("ANÁLISE EXPLORATÓRIA DOS DADOS", align = "center"),
@@ -138,7 +140,7 @@ body <- dashboardBody(
                                  DT::dataTableOutput("TabCategoriaRisco"),
                                  "",
                                  DT::dataTableOutput("TabCategoriaRiscoPotencial"))),
-          title = "VISÃO DAS BARRAGENS POR POTENCIAL DE DANO ASSOCIADO", width = 12
+          title = "VISÃO DAS BARRAGENS POR CATEGORIA DO RISCO E POTENCIAL DE DANO ASSOCIADO", width = 12
         )))
     )
   )
@@ -154,6 +156,23 @@ ui <- dashboardPage(
 # Servidor ####################################################################
 
 server <- function(input, output, session) {
+  
+  output$TabelaCompleta <- DT::renderDataTable({ 
+    Tab <- final %>% 
+      select(`NOME DO EMPREENDEDOR`,BARRAGEM = `NOME DA BARRAGEM DE MINERAÇÃO`,UF,MUNICÍPIO,`MINÉRIO PRINCIPAL`,`ALTURA ATUAL (m)`=AlturaAtual,
+             `VOLUME ATUAL (m3)`=VolumeAtual,UF,`CATEGORIA DE RISCO`,`CATEGORIA DE RISCO`, `DANO POTENCIAL ASSOCIADO`,CLASSE)
+      
+    
+    DT::datatable(Tab,rownames = FALSE, escape = FALSE, extensions = 'Scroller', options = 
+                    list(language = list(url = '//cdn.datatables.net/plug-ins/1.10.11/i18n/Portuguese-Brasil.json'),
+                         pageLength = 20,
+                         columnDefs = list(list(className = 'dt-center', targets = c(0:9))),
+                         initComplete = JS(
+                           "function(settings, json) {",
+                           "$(this.api().table().header()).css({'background-color': '#22115e', 'color': '#fff'});",
+                           "}")
+                    )) %>%formatCurrency(c(6:7),digits = 1,currency = "",mark=".",dec.mark = ",")
+  })
   
   output$TabCategoriaRisco <- DT::renderDataTable({ 
    
@@ -203,12 +222,14 @@ server <- function(input, output, session) {
   })
   
   output$MapaBarragensDano <- renderHighchart({ 
-    leaflet(data = final) %>% addTiles() %>%
+    leaflet(data = final) %>% 
+      addTiles() %>%
       addCircleMarkers(~long, ~lat, radius = 5,
                        #clusterOptions = markerClusterOptions(),
                        popup = ~as.character(`NOME DA BARRAGEM DE MINERAÇÃO`), label = ~as.character(`NOME DA BARRAGEM DE MINERAÇÃO`),
                        color=final$ColorDano)
   })
+  
   
 }
 
